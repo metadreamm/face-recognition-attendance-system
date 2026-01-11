@@ -1,0 +1,164 @@
+/* Custom styles for Attendance System */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Override Bootstrap colors to match custom navy theme */
+:root {
+    /* Primary color */
+    --bs-primary: #001f3f;
+    --bs-primary-rgb: 0, 31, 63;
+
+    /* Info color */
+    --bs-info: #4a90c2;
+    --bs-info-rgb: 74, 144, 194;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #001f3f;
+    border-color: #001f3f;
+}
+
+.btn-primary:hover {
+    background-color: #003366;
+    border-color: #003366;
+}
+
+.btn-info {
+    background-color: #4a90c2;
+    border-color: #4a90c2;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #3a7ba8;
+    border-color: #3a7ba8;
+    color: white;
+}
+/* Camera container */
+#camera-container {
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
+}
+
+#camera-container video {
+    display: block;
+}
+
+/* Cards */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    font-weight: 500;
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* Dashboard stats cards */
+.card.bg-primary,
+.card.bg-success,
+.card.bg-warning {
+    transition: transform 0.2s;
+}
+
+.card.bg-primary:hover,
+.card.bg-success:hover,
+.card.bg-warning:hover {
+    transform: translateY(-2px);
+}
+
+/* Table styling */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+/* Form styling */
+.form-label {
+    font-weight: 500;
+}
+
+/* Progress bar in attendance table */
+.progress {
+    border-radius: 4px;
+}
+
+/* Alert styling */
+.alert {
+    border: none;
+    border-radius: 8px;
+}
+
+/* Footer */
+.footer {
+    margin-top: auto;
+}
+
+/* Camera preview styling */
+#camera-preview,
+#captured-photo {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #camera-container video,
+    #camera-container canvas {
+        width: 100%;
+        height: auto;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        border-radius: 4px !important;
+        margin-bottom: 4px;
+    }
+}
+
+/* Recognition status animation */
+#recognized-person .alert {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Badge styling */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+/* Loading spinner */
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Edytuj dane osoby - System Obecności{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-person-plus"></i> Edytuj dane osoby</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="add-person-form">
+                    <input type="hidden" id="camera_photo" name="camera_photo">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Imię i nazwisko *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ person.name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ person.email }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="student_id" class="form-label">ID studenta (5 cyfr)</label>
+                        <input type="text" class="form-control" id="student_id" name="student_id" value="{{ person.student_id }}"
+                                maxlength="5" pattern="\d{5}" inputmode="numeric"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg"></i> Zapisz
+                        </button>
+                        <a href="{{ url_for('main.persons') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg"></i> Anuluj
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const video = document.getElementById('camera-preview');
+const canvas = document.getElementById('photo-canvas');
+const capturedImg = document.getElementById('captured-photo');
+const placeholder = document.getElementById('camera-placeholder');
+const startBtn = document.getElementById('start-camera');
+const captureBtn = document.getElementById('capture-photo');
+const retakeBtn = document.getElementById('retake-photo');
+
+let stream = null;
+
+startBtn.addEventListener('click', async () => {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.classList.remove('d-none');
+        placeholder.classList.add('d-none');
+        startBtn.classList.add('d-none');
+        captureBtn.classList.remove('d-none');
+        video.play();
+    } catch (err) {
+        alert('Nie można uzyskać dostępu do kamery');
+    }
+});
+
+captureBtn.addEventListener('click', () => {
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, 320, 240);
+    const photoData = canvas.toDataURL('image/jpeg');
+    capturedImg.src = photoData;
+    document.getElementById('camera_photo').value = photoData;
+    capturedImg.classList.remove('d-none');
+    video.classList.add('d-none');
+    captureBtn.classList.add('d-none');
+    retakeBtn.classList.remove('d-none');
+    
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+
+retakeBtn.addEventListener('click', async () => {
+    capturedImg.classList.add('d-none');
+    retakeBtn.classList.add('d-none');
+    document.getElementById('camera_photo').value = '';
+    startBtn.click();
+});
+</script>
+{% endblock %}

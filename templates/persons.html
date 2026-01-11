@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Zarządzanie osobami - System Obecności{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Zarejestrowane osoby</h2>
+    <a href="{{ url_for('main.add_person') }}" class="btn btn-success">
+        <i class="bi bi-person-plus"></i> Dodaj osobę
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if persons %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Zdjęcie</th>
+                        <th>Imię i nazwisko</th>
+                        <th>Email</th>
+                        <th>ID studenta</th>
+                        <th>Data dodania</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for person in persons %}
+                    <tr>
+                        <td>{{ person.id }}</td>
+                        <td>
+                            {% if person.photo_path %}
+                            <a href="{{ url_for('main.known_faces', filename=person.photo_path) }}" target="_blank" 
+                            class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-image"></i> Zobacz
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Brak</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ person.name }}</td>
+                        <td>{{ person.email or '-' }}</td>
+                        <td>{{ person.student_id or '-' }}</td>
+                        <td>{{ person.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('main.edit_person', id=person.id) }}" class="btn btn-outline-primary"
+                                title="Edytuj">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('main.delete_person', id=person.id) }}" 
+                                   class="btn btn-outline-danger" 
+                                   title="Usuń"
+                                   onclick="return confirm('Czy na pewno chcesz usunąć tę osobę?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people fs-1 text-muted"></i>
+            <p class="text-muted mt-3">Brak zarejestrowanych osób</p>
+            <a href="{{ url_for('main.add_person') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Dodaj pierwszą osobę
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

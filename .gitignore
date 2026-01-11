@@ -1,0 +1,27 @@
+# Virtual environment
+venv/
+.venv/
+
+# Database
+*.db
+database/*.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Uploaded photos (keep folder, ignore contents)
+known_faces/*
+!known_faces/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db

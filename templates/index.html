@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Strona główna - System Obecności{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-camera-video"></i> Kamera na żywo</h5>
+            </div>
+            <div class="card-body text-center">
+                <div id="camera-container" class="mb-3 position-relative">
+                    <video id="video" width="640" height="480" autoplay class="border rounded"></video>
+                    <canvas id="overlay" width="640" height="480" class="position-absolute top-0 start-50 translate-middle-x"></canvas>
+                    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+                </div>
+                <div class="btn-group">
+                    <button id="startBtn" class="btn btn-success">
+                        <i class="bi bi-play-fill"></i> Uruchom kamerę
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>
+                        <i class="bi bi-stop-fill"></i> Zatrzymaj
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-person-check"></i> Status rozpoznawania</h5>
+            </div>
+            <div class="card-body">
+                <div id="recognition-status">
+                    <p class="text-muted">Uruchom kamerę, aby rozpocząć rozpoznawanie twarzy</p>
+                </div>
+                <div id="recognized-list"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Instrukcja</h5>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li>Kliknij "Uruchom kamerę"</li>
+                    <li>Pozwól na dostęp do kamery</li>
+                    <li>Spójrz w kamerę</li>
+                    <li>System automatycznie rozpozna Twoją twarz</li>
+                    <li>Obecność zostanie zarejestrowana</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const overlay = document.getElementById('overlay');
+const ctx = overlay.getContext('2d');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const statusDiv = document.getElementById('recognition-status');
+const listDiv = document.getElementById('recognized-list');
+
+let stream = null;
+let recognitionInterval = null;
+let recognizedToday = new Set();
+
+startBtn.addEventListener('click', async () => {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 640, height: 480 } 
+        });
+        video.srcObject = stream;
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        statusDiv.innerHTML = '<p class="text-success">Kamera aktywna. Szukam twarzy...</p>';
+        
+        // Rozpocznij rozpoznawanie co 2 sekundy
+        recognitionInterval = setInterval(processFrame, 2000);
+    } catch (err) {
+        alert('Nie można uzyskać dostępu do kamery: ' + err.message);
+    }
+});
+
+stopBtn.addEventListener('click', () => {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+    if (recognitionInterval) {
+        clearInterval(recognitionInterval);
+    }
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    statusDiv.innerHTML = '<p class="text-muted">Kamera zatrzymana</p>';
+});
+
+async function processFrame() {
+    // Rysuj aktualną klatkę na canvas
+    const tempCanvas = document.getElementById('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(video, 0, 0, 640, 480);
+    
+    // Wyślij do serwera
+    const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
+    
+    try {
+        const response = await fetch('/api/recognize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageData })
+        });
+        
+        const data = await response.json();
+        
+        // Wyczyść overlay
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        
+        if (data.success && data.faces.length > 0) {
+            data.faces.forEach(face => {
+                const box = face.box;
+                
+                // Kolor ramki: zielony dla rozpoznanych, czerwony dla nieznanych
+                if (face.person_id) {
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.fillStyle = '#00ff00';
+                    
+                    // Dodaj do listy rozpoznanych
+                    if (!recognizedToday.has(face.person_id)) {
+                        recognizedToday.add(face.person_id);
+                        addToRecognizedList(face.name, face.confidence);
+                    }
+                } else {
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.fillStyle = '#ff0000';
+                }
+                
+                // Rysuj ramkę
+                ctx.lineWidth = 2;
+                ctx.strokeRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
+                
+                // Rysuj etykietę
+                ctx.font = '16px Arial';
+                const label = face.person_id ? 
+                    face.name + ' (' + Math.round(face.confidence * 100) + '%)' : 
+                    'Nieznany';
+                ctx.fillText(label, box.left, box.top - 5);
+            });
+            
+            statusDiv.innerHTML = '<p class="text-success">Wykryto ' + data.faces.length + ' twarz(e)</p>';
+        } else {
+            statusDiv.innerHTML = '<p class="text-warning">Nie wykryto twarzy</p>';
+        }
+    } catch (err) {
+        console.error('Błąd rozpoznawania:', err);
+    }
+}
+
+function addToRecognizedList(name, confidence) {
+    const time = new Date().toLocaleTimeString('pl-PL');
+    const html = `
+        <div class="alert alert-success py-2 mb-2">
+            <strong>${name}</strong><br>
+            <small>Godz: ${time} | Pewność: ${Math.round(confidence * 100)}%</small>
+        </div>
+    `;
+    listDiv.innerHTML = html + listDiv.innerHTML;
+}
+</script>
+{% endblock %}

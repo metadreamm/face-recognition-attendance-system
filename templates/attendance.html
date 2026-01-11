@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Historia obecności - System Obecności{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-calendar-check"></i> Historia obecności</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label for="date" class="form-label">Wybierz datę:</label>
+                <input type="date" class="form-control" id="date" name="date" value="{{ selected_date }}">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Pokaż
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Obecność na dzień: {{ selected_date }}</h5>
+    </div>
+    <div class="card-body">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Imię i nazwisko</th>
+                        <th>ID studenta</th>
+                        <th>Godzina</th>
+                        <th>Status</th>
+                        <th>Pewność rozpoznania</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ record.person.name }}</td>
+                        <td>{{ record.person.student_id or '-' }}</td>
+                        <td>{{ record.timestamp.strftime('%H:%M:%S') }}</td>
+                        <td>
+                            {% if record.status == 'present' %}
+                            <span class="badge bg-success">Obecny</span>
+                            {% elif record.status == 'late' %}
+                            <span class="badge bg-warning">Spóźniony</span>
+                            {% else %}
+                            <span class="badge bg-danger">Nieobecny</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.confidence %}
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-{{ 'success' if record.confidence > 0.8 else 'warning' }}" 
+                                     style="width: {{ record.confidence * 100 }}%">
+                                    {{ '%.1f' % (record.confidence * 100) }}%
+                                </div>
+                            </div>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x fs-1 text-muted"></i>
+            <p class="text-muted mt-3">Brak zapisów obecności na wybraną datę</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
